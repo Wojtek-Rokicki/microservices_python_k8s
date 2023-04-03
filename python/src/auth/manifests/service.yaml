@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth
+spec:
+  selector:
+    app: auth
+  type: ClusterIP # ip address assigned to this service is going to be accessible within our cluster
+  ports:
+    - port: 5000
+      targetPort: 5000
+      protocol: TCP

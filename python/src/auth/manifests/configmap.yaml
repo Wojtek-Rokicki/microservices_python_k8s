@@ -1,0 +1,12 @@
+# Set enviroment variables within our container
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-configmap
+data:
+  MYSQL_HOST: host.minikube.internal # minikube gives us access to cluster host; we need to access database from the cluster host
+  MYSQL_USER: auth_user
+  MYSQL_DB: auth
+  MYSQL_PORT: "3306" # note! it is string explicitly
+
+# all the variables will be accessible in the container
