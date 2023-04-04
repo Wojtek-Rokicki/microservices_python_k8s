@@ -1,3 +1,4 @@
+-- creating user to access the database via auth service
 CREATE USER 'auth_user'@'localhost' IDENTIFIED BY 'Auth123'; -- password Auth123
 CREATE DATABASE auth;
 
@@ -15,4 +16,4 @@ INSERT INTO user (email, password) VALUES ('georgio@email.com', 'Admin123');
 
 -- to source this script type mysql -uroot < init.sql
 -- mysql -uroot -e "DROP DATABASE auth; DROP USER auth_user@localhost"
--- inside the database: show databases; use auth; show tables; describe user; select * from user;
+-- inside the database: show databases; use auth; show tables; describe user; [desribes user table] select * from user;

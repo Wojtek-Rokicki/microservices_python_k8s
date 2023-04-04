@@ -15,7 +15,8 @@ server.config["MYSQL_PORT"] = os.environ.get("MYSQL_PORT")
 
 @server.route('/login', methods=['POST'])
 def login():
-    auth = request.authorization
+    auth = request.authorization # Here we are using Basic scheme of authentication: Authorization: Basic <credentials>
+    # where credentials are base64(username:password)
     if not auth: # if request misses authorization header then we return unathorized error code
         return 'missing credentials', 401
     
@@ -40,16 +41,16 @@ def login():
 # In the production you should spend your time on checking the type in Authorization header
 @server.route("/validate", methods=["POST"])
 def validate():
-    encoded_jwt = request.headers["Authorization"]
+    encoded_jwt = request.headers["Authorization"] # Here we should have Bearer authorization scheme
 
     if not encoded_jwt:
         return "missing credentials", 401
     
-    encoded_jwt = encoded_jwt.split(" ")[1]
+    encoded_jwt = encoded_jwt.split(" ")[1] # we are omiting the phrase Bearer from the header
 
     try:
         decoded = jwt.decode(
-            encoded_jwt, os.environ.get("JWT_SECRET"), algorithm=["HS256"]
+            encoded_jwt, os.environ.get("JWT_SECRET"), algorithm=["HS256"] # validating just by key decryption ...
         )
     except:
         return "not authorized", 403
@@ -71,6 +72,3 @@ def createJWT(username, secret, authz):
 
 if __name__ == "__main__":
     server.run(host="0.0.0.0", port=5000) # listen on all docker container ports
-
-    # auth.username
-    # auth.password
