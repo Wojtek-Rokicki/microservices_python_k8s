@@ -15,6 +15,6 @@ def token(request):
         )
 
     if response.status_code == 200:
-        return response.txt, None # respoonse.txt will hold token decoded payload: username, exp, iat, admin
+        return response.text, None # respoonse.txt will hold token decoded payload: username, exp, iat, admin
     else:
-        return None, (response.txt, response.status_code) 
+        return None, (response.text, response.status_code) 
