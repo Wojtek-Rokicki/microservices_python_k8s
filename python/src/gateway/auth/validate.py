@@ -1,7 +1,7 @@
 import os, requests
 
 def token(request):
-    if not "Authrization" in request.headers:
+    if not "Authorization" in request.headers:
         return None, ("missing credentials", 401)
 
     token = request.headers["Authorization"]

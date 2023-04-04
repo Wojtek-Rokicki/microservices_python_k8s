@@ -29,6 +29,9 @@ def login():
 @server.route("/upload", methods=["POST"])
 def upload():
     access, err = validate.token(request)
+
+    if err:
+        return err
     
     access = json.loads(access)
 
