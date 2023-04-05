@@ -1,6 +1,8 @@
 import os, gridfs, pika, json, sys # gridfs enables storing larger files (>16MB) in MongoDB; pika interface to rabbitmq
-from flask import Flask, request
+from flask import Flask, request, send_file
 from flask_pymongo import PyMongo
+from datetime import datetime
+from bson.objectid import ObjectId
 
 # At first not implemented
 from auth import validate
@@ -9,13 +11,16 @@ from storage import util
 
 server = Flask(__name__)
 try:
-    mongo_video = PyMongo(server, uri="mongodb://host.minikube.internal:27017/videos") # gives us the access to the host of clusters
+    mongo_video = PyMongo(server, uri="mongodb://host.minikube.internal:27017/videos", tz_aware=True, timezone=datetime.timezone.utc) # gives us the access to the host of clusters
+    mongo_mp3 = PyMongo(server, uri="mongodb://host.minikube.internal:27017/mp3s", tz_aware=True, timezone=datetime.timezone.utc)
+
 except Exception as err:
     print(err, file=sys.stderr)
 
 try:
-    fs = gridfs.GridFS(mongo_video.db) # it divides the file into parts, or chunks enabling larger files, and each chunk is stored as separate file
+    fs_videos = gridfs.GridFS(mongo_video.db) # it divides the file into parts, or chunks enabling larger files, and each chunk is stored as separate file
     # collections in MongoDB are just like tables
+    fs_mp3s = gridfs.GridFS(mongo_mp3.db)
 except Exception as err:
     print(err, file=sys.stderr)
 
@@ -43,7 +48,7 @@ def upload():
             return "exactly 1 file required", 400
         
         for _, f in request.files.items():
-            err = util.upload(f, fs, channel, access)
+            err = util.upload(f, fs_videos, channel, access)
 
             if err:
                 return err
@@ -54,7 +59,24 @@ def upload():
 
 @server.route("/download", methods=["GET"])
 def download():
-    pass
+    access, err = validate.token(request)
+    if err:
+        return err
+    
+    access = json.loads(access)
+
+    if access["admin"]:
+        fid_string = request.args.get("fid")
+        if not fid_string:
+            return "fid is required", 400
+        try:
+            out = fs_mp3s.get(ObjectId(fid_string))
+            return send_file(out, download_name=f"{fid_string}.mp3")
+        except Exception as err:
+            print(err, sys.stderr)
+            return "internal server error", 500
+    else:
+        return "not authorized", 401
 
 if __name__ == "__main__":
     server.run(host="0.0.0.0", port=8080)
