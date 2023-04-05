@@ -1,4 +1,4 @@
-import os, gridfs, pika, json # gridfs enables storing larger files (>16MB) in MongoDB; pika interface to rabbitmq
+import os, gridfs, pika, json, sys # gridfs enables storing larger files (>16MB) in MongoDB; pika interface to rabbitmq
 from flask import Flask, request
 from flask_pymongo import PyMongo
 
@@ -8,12 +8,16 @@ from auth_svc import access
 from storage import util
 
 server = Flask(__name__)
-server.config["MONGO_URI"] = "mongodb://host.minikube.internal:27017/videos" # gives us the access to the host of clusters
+try:
+    mongo_video = PyMongo(server, uri="mongodb://host.minikube.internal:27017/videos") # gives us the access to the host of clusters
+except Exception as err:
+    print(err, file=sys.stderr)
 
-mongo = PyMongo(server)
-
-fs = gridfs.GridFS(mongo.db) # it divides the file into parts, or chunks enabling larger files, and each chunk is stored as separate file
-# collections in MongoDB are just like tables
+try:
+    fs = gridfs.GridFS(mongo_video.db) # it divides the file into parts, or chunks enabling larger files, and each chunk is stored as separate file
+    # collections in MongoDB are just like tables
+except Exception as err:
+    print(err, file=sys.stderr)
 
 connection = pika.BlockingConnection(pika.ConnectionParameters("rabbitmq")) # synchronous
 channel = connection.channel()
@@ -29,7 +33,6 @@ def login():
 @server.route("/upload", methods=["POST"])
 def upload():
     access, err = validate.token(request)
-
     if err:
         return err
     
