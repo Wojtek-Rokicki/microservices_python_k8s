@@ -1,7 +1,6 @@
 import os, gridfs, pika, json, sys # gridfs enables storing larger files (>16MB) in MongoDB; pika interface to rabbitmq
 from flask import Flask, request, send_file
 from flask_pymongo import PyMongo
-from datetime import datetime
 from bson.objectid import ObjectId
 
 # At first not implemented
@@ -10,19 +9,13 @@ from auth_svc import access
 from storage import util
 
 server = Flask(__name__)
-try:
-    mongo_video = PyMongo(server, uri="mongodb://host.minikube.internal:27017/videos", tz_aware=True, timezone=datetime.timezone.utc) # gives us the access to the host of clusters
-    mongo_mp3 = PyMongo(server, uri="mongodb://host.minikube.internal:27017/mp3s", tz_aware=True, timezone=datetime.timezone.utc)
 
-except Exception as err:
-    print(err, file=sys.stderr)
+mongo_video = PyMongo(server, uri="mongodb://host.minikube.internal:27017/videos", tz_aware=True) # gives us the access to the host of clusters
+mongo_mp3 = PyMongo(server, uri="mongodb://host.minikube.internal:27017/mp3s", tz_aware=True)
 
-try:
-    fs_videos = gridfs.GridFS(mongo_video.db) # it divides the file into parts, or chunks enabling larger files, and each chunk is stored as separate file
-    # collections in MongoDB are just like tables
-    fs_mp3s = gridfs.GridFS(mongo_mp3.db)
-except Exception as err:
-    print(err, file=sys.stderr)
+fs_videos = gridfs.GridFS(mongo_video.db) # it divides the file into parts, or chunks enabling larger files, and each chunk is stored as separate file
+# collections in MongoDB are just like tables
+fs_mp3s = gridfs.GridFS(mongo_mp3.db)
 
 connection = pika.BlockingConnection(pika.ConnectionParameters("rabbitmq")) # synchronous
 channel = connection.channel()
